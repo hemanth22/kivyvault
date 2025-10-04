@@ -46,3 +46,11 @@
             pos_hint: {'center_x': 0.5}
             size_hint: (1, 0.2)
             on_release: root.copy_to_clipboard(self)
+
+        Button:
+            text: 'Show/Hide'
+            font_size: 32
+            pos_hint: {'center_x': 0.5}
+            size_hint: (1, 0.2)
+            on_press: root.toggle_password()
+

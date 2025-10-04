@@ -12,14 +12,16 @@ import json
 from Cryptodome.Cipher import Blowfish
 from Cryptodome.Util.Padding import pad, unpad
 from base64 import b64encode, b64decode
+from kivy.properties import BooleanProperty
+
+
 
 Builder.load_file('hike.kv')
 
 class MyGridLayout(Widget):
 
     oldsalary = ObjectProperty()
-
-
+    show_password = BooleanProperty(False)
 
 
     def simpleiint(self):
@@ -42,11 +44,17 @@ class MyGridLayout(Widget):
         #newsalary = self.newsalary.text
         #result_percent = round((((int(newsalary)-int(oldsalary)) / int(oldsalary)) * 100),2)
         #print('Your hike {0}%'.format(result_percent))
-        self.ids.name_label2.text = f'{result}'
+        self.decrypted_password = result
+        #self.ids.name_label2.text = f'{result}'
+        self.ids.name_label2.text = result if self.show_password else '*' * len(result)
         self.ids.oldsalary.text = ''
-        
+
+    def toggle_password(self):
+        self.show_password = not self.show_password
+        self.ids.name_label2.text = self.decrypted_password if self.show_password else '*' * len(self.decrypted_password)
+
     def copy_to_clipboard(self, instance):
-        text_to_copy = self.ids.name_label2.text
+        text_to_copy = self.decrypted_password
         Clipboard.copy(text_to_copy)
 
 class hikeApp(App):
