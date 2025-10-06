@@ -2,7 +2,7 @@ name: Build Kivy Installer
 
 on:
   push:
-    branches: [ release* ]
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
@@ -21,14 +21,14 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install kivy pyinstaller blowfish pycryptodome pycryptodomex
+        pip install kivy pyinstaller pycryptodome
 
     - name: Build installer with PyInstaller
       run: |
         pyinstaller main.py --name hikeApp --onefile --windowed --add-data "hike.kv;."
 
     - name: Upload installer artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: hikeApp-installer
         path: dist/hikeApp.exe
