@@ -2,7 +2,7 @@ name: Build Kivy Installer
 
 on:
   push:
-    branches: [ main ]
+    branches: [ release* ]
   workflow_dispatch:
 
 jobs:
