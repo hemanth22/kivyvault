@@ -25,8 +25,14 @@ class MyGridLayout(Widget):
 
 
     def simpleiint(self):
-        jdata = '{"hemanth": "0d4ba01661c2de80","priyadharshini": "20bc3aa6fbf6b2c0e9f622c36f5a20db"}'
-        data = json.loads(jdata)
+        #jdata = '{"hemanth": "0d4ba01661c2de80","priyadharshini": "20bc3aa6fbf6b2c0e9f622c36f5a20db"}'
+        #data = json.loads(jdata)
+        try:
+            with open('data.json', 'r') as f:
+                data = json.load(f)
+        except (FileNotFoundError, IOError, json.JSONDecodeError) as e:
+            self.ids.name_label2.text = "Error loading JSON: {e}"
+            return
 
         secret_key = b'bitroid'
         bf = Blowfish.new(secret_key, Blowfish.MODE_ECB)
