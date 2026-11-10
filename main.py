@@ -3,8 +3,9 @@ import os
 import tkinter as tk
 from tkinter import messagebox
 import customtkinter as ctk
-from Cryptodome.Cipher import Blowfish
-from Cryptodome.Util.Padding import pad, unpad
+from Cryptodome.Cipher import AES
+from Cryptodome.Hash import SHA256
+from Cryptodome.Random import get_random_bytes
 
 # Palette
 APP_BG = '#eef2f8'
@@ -36,19 +37,30 @@ HINTS = {
 }
 
 
-def _cipher():
-    return Blowfish.new(SECRET_KEY, Blowfish.MODE_ECB)
+# AES-256 needs a 32-byte key; derive one from the configured secret.
+AES_KEY = SHA256.new(SECRET_KEY).digest()
+NONCE_SIZE = 12  # recommended nonce length for GCM
+TAG_SIZE = 16
 
 
 def encrypt_password(password: str) -> str:
-    padded = pad(password.encode('utf-8'), Blowfish.block_size)
-    return _cipher().encrypt(padded).hex()
+    """Encrypt with AES-256-GCM. Output is hex(nonce || tag || ciphertext)."""
+    cipher = AES.new(AES_KEY, AES.MODE_GCM, nonce=get_random_bytes(NONCE_SIZE))
+    cipher_text, tag = cipher.encrypt_and_digest(password.encode('utf-8'))
+    return (cipher.nonce + tag + cipher_text).hex()
 
 
 def decrypt_password(encrypted_password: str) -> str:
-    cipher_text = bytes.fromhex(encrypted_password)
-    decrypted = _cipher().decrypt(cipher_text)
-    return unpad(decrypted, Blowfish.block_size).decode('utf-8')
+    """Decrypt a value produced by encrypt_password. Raises ValueError if the
+    input is malformed or fails authentication (wrong key / tampered data)."""
+    raw = bytes.fromhex(encrypted_password)
+    if len(raw) < NONCE_SIZE + TAG_SIZE:
+        raise ValueError('Ciphertext is too short')
+    nonce = raw[:NONCE_SIZE]
+    tag = raw[NONCE_SIZE:NONCE_SIZE + TAG_SIZE]
+    cipher_text = raw[NONCE_SIZE + TAG_SIZE:]
+    cipher = AES.new(AES_KEY, AES.MODE_GCM, nonce=nonce)
+    return cipher.decrypt_and_verify(cipher_text, tag).decode('utf-8')
 
 
 class VaultApp(ctk.CTk):
