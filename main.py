@@ -350,13 +350,13 @@ class VaultApp(ctk.CTk):
             return
         try:
             result = decrypt_password(value)
-        except ValueError as exc:
-            self._set_tool_output('')
-            self._set_status(f'Decryption failed: {exc}', ERROR)
-            return
         except UnicodeDecodeError:
             self._set_tool_output('')
             self._set_status('Decryption failed: result is not valid UTF-8.', ERROR)
+            return
+        except ValueError as exc:
+            self._set_tool_output('')
+            self._set_status(f'Decryption failed: {exc}', ERROR)
             return
         self._set_tool_output(result)
         self._set_status('Decrypted.', SUCCESS, 3000)
