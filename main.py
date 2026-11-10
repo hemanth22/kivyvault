@@ -1,4 +1,5 @@
 import json
+import tkinter as tk
 from tkinter import messagebox
 import customtkinter as ctk
 from Cryptodome.Cipher import Blowfish
@@ -20,6 +21,7 @@ SUCCESS = '#16a34a'
 
 FONT_FAMILY = 'Segoe UI'
 FIELD_HEIGHT = 44
+CLIPBOARD_CLEAR_MS = 60_000  # wipe copied secrets from the clipboard after 60s
 
 SECRET_KEY = b'bitroid'
 
@@ -56,7 +58,10 @@ class VaultApp(ctk.CTk):
         self.show_password = False
         self.decrypted_password = ''
         self._status_job = None
+        self._clipboard_job = None
+        self._clipboard_value = None
         self.mode = MODE_VAULT
+        self.protocol('WM_DELETE_WINDOW', self._on_close)
 
         self._create_widgets()
         self._update_password_display()
@@ -288,7 +293,7 @@ class VaultApp(ctk.CTk):
             self._set_status('Decrypt a password first.', ERROR, 3000)
             return
         self._copy(self.decrypted_password, self.copy_button)
-        self._set_status('Password copied to clipboard.', SUCCESS, 3000)
+        self._set_status('Password copied — clipboard clears in 60s.', SUCCESS, 3000)
 
     # ------------------------------------------------------------ crypto tools
 
@@ -361,6 +366,36 @@ class VaultApp(ctk.CTk):
         self.clipboard_append(text)
         button.configure(text='Copied')
         self.after(1500, lambda: button.configure(text='Copy'))
+        self._schedule_clipboard_clear(text)
+
+    def _schedule_clipboard_clear(self, text):
+        """Wipe the copied value from the clipboard after CLIPBOARD_CLEAR_MS."""
+        if self._clipboard_job is not None:
+            self.after_cancel(self._clipboard_job)
+        self._clipboard_value = text
+        self._clipboard_job = self.after(CLIPBOARD_CLEAR_MS, self._clear_clipboard)
+
+    def _clear_clipboard(self):
+        """Clear the clipboard, but only if it still holds the value we copied."""
+        self._clipboard_job = None
+        if self._clipboard_value is None:
+            return
+        try:
+            current = self.clipboard_get()
+        except tk.TclError:
+            current = None
+        if current == self._clipboard_value:
+            self.clipboard_clear()
+            self.clipboard_append('')
+            self.update()  # make sure the OS clipboard is updated
+            self._set_status('Clipboard cleared.', MUTED, 3000)
+        self._clipboard_value = None
+
+    def _on_close(self):
+        if self._clipboard_job is not None:
+            self.after_cancel(self._clipboard_job)
+            self._clear_clipboard()
+        self.destroy()
 
     def clear(self):
         if self.mode == MODE_TOOLS:
