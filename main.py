@@ -71,7 +71,7 @@ class VaultApp(ctk.CTk):
         self.resizable(False, False)
 
         self.show_password = False
-        self.decrypted_password = ''
+        self.decrypted_password = None  # str once a vault entry is decrypted
         self._status_job = None
         self._clipboard_job = None
         self._clipboard_value = None
@@ -432,7 +432,7 @@ class VaultApp(ctk.CTk):
             self.tool_input.delete(0, 'end')
             self._set_tool_output('')
         else:
-            self.decrypted_password = ''
+            self.decrypted_password = None
             self.show_password = False
             self.username_entry.set('')
             self._update_password_display()
