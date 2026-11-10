@@ -196,10 +196,12 @@ class VaultApp(ctk.CTk):
         actions.pack(fill='x', pady=(14, 22))
         actions.grid_columnconfigure((0, 1, 2), weight=1, uniform='actions')
 
-        primary = dict(height=FIELD_HEIGHT, corner_radius=10, fg_color=BLUE, hover_color=BLUE_HOVER,
-                       text_color='#ffffff', font=self._font(14, 'bold'))
-        secondary = dict(height=FIELD_HEIGHT, corner_radius=10, fg_color=BLUE_TINT,
-                         hover_color='#d6e2fb', text_color=BLUE, font=self._font(14, 'bold'))
+        primary = {'height': FIELD_HEIGHT, 'corner_radius': 10, 'fg_color': BLUE,
+                   'hover_color': BLUE_HOVER, 'text_color': '#ffffff',
+                   'font': self._font(14, 'bold')}
+        secondary = {'height': FIELD_HEIGHT, 'corner_radius': 10, 'fg_color': BLUE_TINT,
+                     'hover_color': '#d6e2fb', 'text_color': BLUE,
+                     'font': self._font(14, 'bold')}
         ctk.CTkButton(actions, text='Encrypt', command=self.tool_encrypt, **primary) \
             .grid(row=0, column=0, sticky='ew', padx=(0, 5))
         ctk.CTkButton(actions, text='Decrypt', command=self.tool_decrypt, **primary) \
