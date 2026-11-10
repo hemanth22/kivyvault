@@ -1,4 +1,5 @@
 import json
+import os
 import tkinter as tk
 from tkinter import messagebox
 import customtkinter as ctk
@@ -22,6 +23,8 @@ SUCCESS = '#16a34a'
 FONT_FAMILY = 'Segoe UI'
 FIELD_HEIGHT = 44
 CLIPBOARD_CLEAR_MS = 60_000  # wipe copied secrets from the clipboard after 60s
+DATA_FILE = 'data.json'
+DATA_POLL_MS = 2000  # how often to check data.json for new entries
 
 SECRET_KEY = b'bitroid'
 
@@ -65,6 +68,8 @@ class VaultApp(ctk.CTk):
 
         self._create_widgets()
         self._update_password_display()
+        self._data_mtime = None
+        self._watch_data_file()
 
     def _font(self, size, weight='normal', family=FONT_FAMILY):
         return ctk.CTkFont(family=family, size=size, weight=weight)
@@ -237,7 +242,7 @@ class VaultApp(ctk.CTk):
             return
 
         try:
-            with open('data.json', 'r', encoding='utf-8') as f:
+            with open(DATA_FILE, 'r', encoding='utf-8') as f:
                 data = json.load(f)
         except FileNotFoundError:
             messagebox.showerror('File Not Found', 'Could not find data.json.')
@@ -266,10 +271,21 @@ class VaultApp(ctk.CTk):
     @staticmethod
     def _load_keys():
         try:
-            with open('data.json', 'r', encoding='utf-8') as f:
+            with open(DATA_FILE, 'r', encoding='utf-8') as f:
                 return sorted(json.load(f))
         except (FileNotFoundError, json.JSONDecodeError):
             return []
+
+    def _watch_data_file(self):
+        """Reload the username dropdown whenever data.json changes on disk."""
+        try:
+            mtime = os.path.getmtime(DATA_FILE)
+        except OSError:
+            mtime = None
+        if mtime != self._data_mtime:
+            self._data_mtime = mtime
+            self.username_entry.configure(values=self._load_keys())
+        self.after(DATA_POLL_MS, self._watch_data_file)
 
     def toggle_password(self):
         if not self.decrypted_password:
