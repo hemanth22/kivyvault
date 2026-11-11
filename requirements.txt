@@ -1,0 +1,5 @@
+pyinstaller
+pycryptodome
+pycryptodomex
+customtkinter
+pydocstyle ## required for offline documentation generation

@@ -1,0 +1,55 @@
+name: Build Kivy Installer
+
+on:
+  push:
+    branches: [ release* ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [ '3.13', '3.14', '3.15' ]
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v6
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v6
+      with:
+        python-version: ${{ matrix.python-version }}
+        allow-prereleases: true
+        cache: pip
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        if [ -f requirements.txt ]; then python -m pip install -r requirements.txt; fi
+
+    - name: Smoke test encrypt / decrypt
+      run: |
+        python - <<'EOF'
+        import sys
+        import main
+        for value in ['hello', 's3cret!', 'unicode-é', 'x' * 64]:
+            cipher = main.encrypt_password(value)
+            assert main.decrypt_password(cipher) == value, value
+        print('Round-trip OK on Python', sys.version)
+        EOF
+
+    - name: Build installer with PyInstaller
+      run: |
+        python -m PyInstaller --onefile --windowed --name KivyVault --hidden-import=customtkinter main.py
+
+    - name: Upload installer artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: KivyVault-installer-py${{ matrix.python-version }}
+        path: dist/KivyVault.exe
